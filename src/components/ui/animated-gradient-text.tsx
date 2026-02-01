@@ -1,5 +1,5 @@
 import React, {
-    CSSProperties,
+    type CSSProperties,
     useEffect,
     useLayoutEffect,
     useMemo,
@@ -224,7 +224,7 @@ const AnimatedGradientText: React.FC<AnimatedGradientTextProps> = ({
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const textSizerRef = useRef<HTMLSpanElement>(null);
     const maskCanvasRef = useRef<HTMLCanvasElement | null>(null);
-    const animationRef = useRef<number>();
+    const animationRef = useRef<number | undefined>(undefined);
     const timeRef = useRef(0);
     const lastFrameRef = useRef<number | null>(null);
     const [canvasPad, setCanvasPad] = useState(0);

@@ -8,15 +8,9 @@ import {
 } from "@/components/ui/card";
 import { Pulse } from "@/components/ui/pulse";
 import AnimatedGradientText from "@/components/ui/animated-gradient-text";
-import {
-    Download,
-    Github,
-    Twitter,
-    MessageSquare,
-    Cpu,
-    Zap,
-    Globe,
-} from "lucide-react";
+import { Download, Cpu, Zap, Globe, Sun, Moon } from "lucide-react";
+import { siGithub, siX, siDiscord } from "simple-icons";
+import { toggleTheme } from "@/lib/theme";
 import "./App.css";
 
 function App() {
@@ -64,10 +58,32 @@ function App() {
                             <Globe className="h-5 w-5" />
                             Learn About SplashOS
                         </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={toggleTheme}
+                            className="rounded-full p-2 w-9 h-9 flex items-center justify-center"
+                            aria-label="Toggle theme"
+                        >
+                            <Sun className="h-4 w-4 dark:hidden" />
+                            <Moon className="h-4 w-4 hidden dark:block" />
+                        </Button>
                     </nav>
-                    <Button variant="outline" size="sm" className="md:hidden">
-                        Menu
-                    </Button>
+                    <div className="flex items-center gap-2 md:hidden">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={toggleTheme}
+                            className="rounded-full p-2"
+                            aria-label="Toggle theme"
+                        >
+                            <Sun className="h-4 w-4 dark:hidden" />
+                            <Moon className="h-4 w-4 hidden dark:block" />
+                        </Button>
+                        <Button variant="outline" size="sm">
+                            Menu
+                        </Button>
+                    </div>
                 </div>
             </header>
 
@@ -127,7 +143,13 @@ function App() {
                                     variant="outline"
                                     className="gap-2"
                                 >
-                                    <MessageSquare className="h-5 w-5" />
+                                    <svg
+                                        className="h-5 w-5"
+                                        fill="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path d={siDiscord.path} />
+                                    </svg>
                                     Join Discord
                                 </Button>
                             </div>
@@ -171,7 +193,7 @@ function App() {
                                     <p className="text-gray-500 dark:text-gray-400 leading-relaxed pb-4">
                                         SplashOS Vision is where the future
                                         begins. A powerful, Fedora-based preview
-                                        designed for rapid innovation and
+                                        designed for testing innovation and
                                         community feedback. Experience the
                                         vision before it becomes the flagship.
                                     </p>
@@ -332,7 +354,13 @@ function App() {
                                 rel="noopener noreferrer"
                                 className="flex flex-col items-center justify-center space-y-4 rounded-lg border p-6 transition-all hover:bg-gray-50 dark:hover:bg-gray-900/50"
                             >
-                                <MessageSquare className="h-12 w-12 text-[#5865F2]" />
+                                <svg
+                                    className="h-12 w-12 text-[#5865F2]"
+                                    fill="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path d={siDiscord.path} />
+                                </svg>
                                 <div className="space-y-2 text-center">
                                     <h3 className="text-xl font-bold">
                                         Discord
@@ -349,7 +377,13 @@ function App() {
                                 rel="noopener noreferrer"
                                 className="flex flex-col items-center justify-center space-y-4 rounded-lg border p-6 transition-all hover:bg-gray-50 dark:hover:bg-gray-900/50"
                             >
-                                <Twitter className="h-12 w-12 text-[#1DA1F2]" />
+                                <svg
+                                    className="h-12 w-12 text-[#1DA1F2]"
+                                    fill="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path d={siX.path} />
+                                </svg>
                                 <div className="space-y-2 text-center">
                                     <h3 className="text-xl font-bold">
                                         Twitter / X
@@ -366,7 +400,13 @@ function App() {
                                 rel="noopener noreferrer"
                                 className="flex flex-col items-center justify-center space-y-4 rounded-lg border p-6 transition-all hover:bg-gray-50 dark:hover:bg-gray-900/50"
                             >
-                                <Github className="h-12 w-12" />
+                                <svg
+                                    className="h-12 w-12"
+                                    fill="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path d={siGithub.path} />
+                                </svg>
                                 <div className="space-y-2 text-center">
                                     <h3 className="text-xl font-bold">
                                         GitHub
@@ -398,7 +438,13 @@ function App() {
                             rel="noopener noreferrer"
                             className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
                         >
-                            <Github className="h-5 w-5" />
+                            <svg
+                                className="h-5 w-5"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d={siGithub.path} />
+                            </svg>
                         </a>
                         <a
                             href="https://twitter.com/splashos"
@@ -406,7 +452,13 @@ function App() {
                             rel="noopener noreferrer"
                             className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
                         >
-                            <Twitter className="h-5 w-5" />
+                            <svg
+                                className="h-5 w-5 text-black"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d={siX.path} />
+                            </svg>
                         </a>
                         <a
                             href="https://discord.gg/splashos"
@@ -414,7 +466,13 @@ function App() {
                             rel="noopener noreferrer"
                             className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
                         >
-                            <MessageSquare className="h-5 w-5" />
+                            <svg
+                                className="h-5 w-5"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d={siDiscord.path} />
+                            </svg>
                         </a>
                     </div>
                     <div className="text-center text-sm text-gray-500 dark:text-gray-400 md:text-right">
