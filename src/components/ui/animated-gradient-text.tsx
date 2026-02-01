@@ -19,19 +19,6 @@ interface AnimatedGradientTextProps {
     fontWeight?: string | number;
 }
 
-interface Particle {
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
-    radius: number;
-    color: string;
-    baseColor: string;
-    life: number;
-    maxLife: number;
-    pulseSeed: number;
-}
-
 interface Dimensions {
     width: number;
     height: number;
@@ -46,53 +33,188 @@ const clamp = (value: number, min: number, max: number) =>
 const useIsomorphicLayoutEffect =
     typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-const createParticles = (
-    count: number,
-    palette: string[],
-    width: number,
-    height: number,
-): Particle[] => {
-    return Array.from({ length: count }, () => ({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.6,
-        vy: (Math.random() - 0.5) * 0.6,
-        radius: 30 + Math.random() * 45,
-        color: palette[Math.floor(Math.random() * palette.length)],
-        baseColor: palette[Math.floor(Math.random() * palette.length)],
-        life: 0,
-        maxLife: 600 + Math.random() * 600,
-        pulseSeed: Math.random() * Math.PI * 2,
-    }));
+const hexToRgb = (hex: string): [number, number, number] => {
+    const value = hex.replace("#", "");
+    const r = parseInt(value.substring(0, 2), 16);
+    const g = parseInt(value.substring(2, 4), 16);
+    const b = parseInt(value.substring(4, 6), 16);
+    return [r / 255, g / 255, b / 255];
 };
 
-const mixColors = (color1: string, color2: string, ratio: number): string => {
-    const hex = (color: string) => color.replace("#", "");
-    const h1 = hex(color1);
-    const h2 = hex(color2);
+const buildPaletteUniform = (palette: string[]) => {
+    const slots = 8;
+    const data = new Float32Array(slots * 3);
+    const normalized =
+        palette.length > 0 ? palette : DEFAULT_COLORS.slice(0, 1);
+    for (let i = 0; i < slots; i += 1) {
+        const color = normalized[Math.min(i, normalized.length - 1)];
+        const [r, g, b] = hexToRgb(color);
+        data[i * 3] = r;
+        data[i * 3 + 1] = g;
+        data[i * 3 + 2] = b;
+    }
+    return data;
+};
 
-    const r1 = parseInt(h1.substring(0, 2), 16);
-    const g1 = parseInt(h1.substring(2, 4), 16);
-    const b1 = parseInt(h1.substring(4, 6), 16);
+const vertexShaderSource = `
+attribute vec2 a_position;
+attribute vec2 a_uv;
+varying vec2 v_uv;
 
-    const r2 = parseInt(h2.substring(0, 2), 16);
-    const g2 = parseInt(h2.substring(2, 4), 16);
-    const b2 = parseInt(h2.substring(4, 6), 16);
+void main() {
+    v_uv = a_uv;
+    gl_Position = vec4(a_position, 0.0, 1.0);
+}
+`;
 
-    const r = Math.round(r1 * (1 - ratio) + r2 * ratio);
-    const g = Math.round(g1 * (1 - ratio) + g2 * ratio);
-    const b = Math.round(b1 * (1 - ratio) + b2 * ratio);
+const fragmentShaderSource = `
+precision highp float;
 
-    return `#${r.toString(16).padStart(2, "0")}${g
-        .toString(16)
-        .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+varying vec2 v_uv;
+
+uniform sampler2D u_mask;
+uniform float u_time;
+uniform float u_speed;
+uniform float u_noiseStrength;
+uniform vec2 u_maskSize;
+uniform vec2 u_maskOffset;
+
+uniform int u_colorCount;
+uniform vec3 u_colors[8];
+
+vec3 colorAtIndex(int idx) {
+    vec3 color = u_colors[0];
+    for (int i = 0; i < 8; i++) {
+        if (i == idx) {
+            color = u_colors[i];
+        }
+    }
+    return color;
+}
+
+vec3 gradientColor(float t) {
+    if (u_colorCount <= 1) {
+        return u_colors[0];
+    }
+    float scaled = t * float(u_colorCount - 1);
+    int idx = int(floor(scaled));
+    float frac = fract(scaled);
+    int nextIdx = idx + 1;
+    if (nextIdx >= u_colorCount) {
+        nextIdx = u_colorCount - 1;
+    }
+    vec3 c0 = colorAtIndex(idx);
+    vec3 c1 = colorAtIndex(nextIdx);
+    return mix(c0, c1, frac);
+}
+
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+
+    float a = hash(i);
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+float fbm(vec2 p) {
+    float value = 0.0;
+    float amplitude = 0.55;
+    for (int i = 0; i < 4; i++) {
+        value += amplitude * noise(p);
+        p *= 2.0;
+        amplitude *= 0.5;
+    }
+    return value;
+}
+
+void main() {
+    vec2 uv = v_uv;
+    float time = u_time * u_speed;
+
+    vec2 flow = vec2(
+        fbm(uv * 2.0 + time * 0.15),
+        fbm(uv * 2.0 - time * 0.12)
+    );
+    vec2 warped = uv + (flow - 0.5) * 0.35;
+
+    float baseField = fbm(warped * 3.2 + time * 0.1);
+    float detailField = fbm(warped * 5.6 - time * 0.08);
+    float band = mix(baseField, detailField, 0.35);
+    band = smoothstep(0.12, 0.88, band);
+
+    vec3 base = gradientColor(band);
+
+    float accent = fbm(warped * 8.0 + time * 0.2);
+    vec3 accentColor = gradientColor(fract(band + (accent - 0.5) * 0.18));
+    base = mix(base, accentColor, 0.18);
+
+    base += u_noiseStrength * 0.025;
+    base = clamp(base, 0.0, 1.0);
+
+    vec2 maskUv = (uv * u_maskSize + u_maskOffset) / (u_maskSize + u_maskOffset * 2.0);
+    float alpha = texture2D(u_mask, vec2(maskUv.x, 1.0 - maskUv.y)).a;
+    vec3 color = base * alpha;
+    gl_FragColor = vec4(color, alpha);
+}
+`;
+
+const createShader = (
+    gl: WebGLRenderingContext,
+    type: number,
+    source: string,
+) => {
+    const shader = gl.createShader(type);
+    if (!shader) return null;
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        gl.deleteShader(shader);
+        return null;
+    }
+    return shader;
+};
+
+const createProgram = (
+    gl: WebGLRenderingContext,
+    vertexSource: string,
+    fragmentSource: string,
+) => {
+    const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexSource);
+    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+    if (!vertexShader || !fragmentShader) return null;
+
+    const program = gl.createProgram();
+    if (!program) return null;
+
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        gl.deleteProgram(program);
+        return null;
+    }
+
+    return program;
 };
 
 const AnimatedGradientText: React.FC<AnimatedGradientTextProps> = ({
     text,
     className = "",
     colors,
-    speed = 0.8,
+    speed = 5,
     blur = 22,
     particleCount = 36,
     fontSize = "inherit",
@@ -101,8 +223,11 @@ const AnimatedGradientText: React.FC<AnimatedGradientTextProps> = ({
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const textSizerRef = useRef<HTMLSpanElement>(null);
+    const maskCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const animationRef = useRef<number>();
-    const particlesRef = useRef<Particle[]>([]);
+    const timeRef = useRef(0);
+    const lastFrameRef = useRef<number | null>(null);
+    const [canvasPad, setCanvasPad] = useState(0);
     const [dimensions, setDimensions] = useState<Dimensions>({
         width: 0,
         height: 0,
@@ -190,162 +315,183 @@ const AnimatedGradientText: React.FC<AnimatedGradientTextProps> = ({
         const canvas = canvasRef.current;
         if (!canvas || !dimensions.width || !dimensions.height) return;
 
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
+        const gl = canvas.getContext("webgl", {
+            alpha: true,
+            antialias: true,
+            premultipliedAlpha: true,
+        });
+        if (!gl) return;
+
+        const program = createProgram(
+            gl,
+            vertexShaderSource,
+            fragmentShaderSource,
+        );
+        if (!program) return;
+
+        const positionLocation = gl.getAttribLocation(program, "a_position");
+        const uvLocation = gl.getAttribLocation(program, "a_uv");
+        const timeLocation = gl.getUniformLocation(program, "u_time");
+        const speedLocation = gl.getUniformLocation(program, "u_speed");
+        const noiseLocation = gl.getUniformLocation(program, "u_noiseStrength");
+        const maskSizeLocation = gl.getUniformLocation(program, "u_maskSize");
+        const maskOffsetLocation = gl.getUniformLocation(
+            program,
+            "u_maskOffset",
+        );
+
+        const maskLocation = gl.getUniformLocation(program, "u_mask");
+        const colorCountLocation = gl.getUniformLocation(
+            program,
+            "u_colorCount",
+        );
+        const colorsLocation = gl.getUniformLocation(program, "u_colors[0]");
+
+        if (
+            !timeLocation ||
+            !speedLocation ||
+            !noiseLocation ||
+            !maskSizeLocation ||
+            !maskOffsetLocation ||
+            !maskLocation ||
+            !colorCountLocation ||
+            !colorsLocation
+        ) {
+            return;
+        }
 
         const dpr =
             typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-        canvas.width = Math.round(dimensions.width * dpr);
-        canvas.height = Math.round(dimensions.height * dpr);
-        canvas.style.width = `${dimensions.width}px`;
-        canvas.style.height = `${dimensions.height}px`;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        const count = clamp(Math.round(particleCount), 8, 80);
-        particlesRef.current = createParticles(
-            count,
-            palette,
-            dimensions.width,
-            dimensions.height,
+        const pad = Math.max(2, Math.ceil(blur * 2));
+        const expandedWidth = dimensions.width + pad * 2;
+        const expandedHeight = dimensions.height + pad * 2;
+
+        canvas.width = Math.round(expandedWidth * dpr);
+        canvas.height = Math.round(expandedHeight * dpr);
+        canvas.style.width = `${expandedWidth}px`;
+        canvas.style.height = `${expandedHeight}px`;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+
+        const maskWidth = expandedWidth;
+        const maskHeight = expandedHeight;
+
+        setCanvasPad(pad);
+
+        const maskCanvas =
+            maskCanvasRef.current ?? document.createElement("canvas");
+        maskCanvasRef.current = maskCanvas;
+        maskCanvas.width = Math.round(maskWidth * dpr);
+        maskCanvas.height = Math.round(maskHeight * dpr);
+
+        const maskCtx = maskCanvas.getContext("2d");
+        if (!maskCtx) return;
+
+        const drawMask = () => {
+            maskCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            maskCtx.clearRect(0, 0, maskWidth, maskHeight);
+            maskCtx.font = dimensions.font;
+            maskCtx.textAlign = "center";
+            maskCtx.textBaseline = "middle";
+            maskCtx.fillStyle = "white";
+            maskCtx.shadowColor = "rgba(255,255,255,0.9)";
+            maskCtx.shadowBlur = blur;
+            maskCtx.fillText(
+                text,
+                dimensions.width / 2 + pad,
+                dimensions.height / 2 + pad,
+            );
+        };
+
+        drawMask();
+
+        timeRef.current = 0;
+        lastFrameRef.current = null;
+
+        const vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array([
+                -1, -1, 0, 0, 1, -1, 1, 0, -1, 1, 0, 1, 1, 1, 1, 1,
+            ]),
+            gl.STATIC_DRAW,
         );
 
-        const drawText = (mode: "fill" | "stroke") => {
-            ctx.font = dimensions.font;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            const x = dimensions.width / 2;
-            const y = dimensions.height / 2;
-            if (mode === "fill") {
-                ctx.fillText(text, x, y);
-            } else {
-                ctx.strokeText(text, x, y);
-            }
+        const stride = 4 * Float32Array.BYTES_PER_ELEMENT;
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, stride, 0);
+        gl.enableVertexAttribArray(uvLocation);
+        gl.vertexAttribPointer(
+            uvLocation,
+            2,
+            gl.FLOAT,
+            false,
+            stride,
+            2 * Float32Array.BYTES_PER_ELEMENT,
+        );
+
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            maskCanvas,
+        );
+
+        const paletteUniform = buildPaletteUniform(palette);
+        const noiseStrength = clamp(particleCount / 60, 0.1, 1);
+
+        gl.useProgram(program);
+        gl.uniform1i(maskLocation, 0);
+        gl.uniform2f(maskSizeLocation, expandedWidth, expandedHeight);
+        gl.uniform2f(maskOffsetLocation, 0, 0);
+        gl.uniform1i(colorCountLocation, clamp(palette.length, 1, 8));
+        gl.uniform3fv(colorsLocation, paletteUniform);
+        gl.uniform1f(speedLocation, Math.max(speed, 0.1) * 0.6);
+        gl.uniform1f(noiseLocation, noiseStrength);
+
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+        const render = (time: number) => {
+            const last = lastFrameRef.current ?? time;
+            const delta = Math.min(Math.max(time - last, 0), 100);
+            lastFrameRef.current = time;
+            timeRef.current += delta * 0.001;
+
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            gl.useProgram(program);
+            gl.uniform1f(timeLocation, timeRef.current);
+            gl.uniform1f(speedLocation, Math.max(speed, 0.1) * 1.25);
+
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+            animationRef.current = requestAnimationFrame(render);
         };
 
-        const animate = (timestamp: number) => {
-            if (!ctx) return;
-
-            const width = dimensions.width;
-            const height = dimensions.height;
-            const baseSpeed = Math.max(speed, 0.2);
-            const travel = width * 1.5;
-            const shift =
-                ((timestamp * 0.00012 * baseSpeed) % 1) * travel - travel / 2;
-
-            ctx.clearRect(0, 0, width, height);
-
-            const gradient = ctx.createLinearGradient(
-                shift,
-                0,
-                shift + travel,
-                height,
-            );
-            if (palette.length === 1) {
-                gradient.addColorStop(0, palette[0]);
-                gradient.addColorStop(1, palette[0]);
-            } else {
-                const lastIndex = palette.length - 1;
-                palette.forEach((color, index) => {
-                    gradient.addColorStop(index / lastIndex, color);
-                });
-            }
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, width, height);
-
-            ctx.save();
-            ctx.globalCompositeOperation = "destination-in";
-            drawText("fill");
-            ctx.restore();
-
-            ctx.save();
-            ctx.globalCompositeOperation = "source-atop";
-            ctx.lineWidth = Math.max(width, height) * 0.012;
-            ctx.strokeStyle = "rgba(255,255,255,0.18)";
-            drawText("stroke");
-            ctx.restore();
-
-            ctx.save();
-            ctx.globalCompositeOperation = "source-atop";
-            ctx.filter = `blur(${blur}px) saturate(135%)`;
-
-            particlesRef.current.forEach((particle, _, particles) => {
-                particle.life += 1;
-                if (particle.life > particle.maxLife) {
-                    particle.life = 0;
-                    particle.baseColor =
-                        palette[Math.floor(Math.random() * palette.length)];
-                }
-
-                particle.x += particle.vx * baseSpeed * 1.1;
-                particle.y += particle.vy * baseSpeed * 1.1;
-
-                if (particle.x < 0 || particle.x > width) particle.vx *= -1;
-                if (particle.y < 0 || particle.y > height) particle.vy *= -1;
-
-                particle.x = clamp(particle.x, 0, width);
-                particle.y = clamp(particle.y, 0, height);
-
-                let mixedColor = particle.baseColor;
-                particles.forEach((other) => {
-                    if (other === particle) return;
-                    const dx = particle.x - other.x;
-                    const dy = particle.y - other.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const range = Math.max(particle.radius, 90);
-                    if (dist < range) {
-                        const influence = 1 - dist / range;
-                        mixedColor = mixColors(
-                            mixedColor,
-                            other.baseColor,
-                            influence * 0.35,
-                        );
-                    }
-                });
-                particle.color = mixedColor;
-
-                const pulse =
-                    0.9 +
-                    Math.sin(timestamp * 0.0012 + particle.pulseSeed) * 0.25;
-                const radius = particle.radius * pulse;
-
-                const paint = ctx.createRadialGradient(
-                    particle.x,
-                    particle.y,
-                    radius * 0.2,
-                    particle.x,
-                    particle.y,
-                    radius,
-                );
-                paint.addColorStop(0, `${particle.color}ff`);
-                paint.addColorStop(0.45, `${particle.color}d0`);
-                paint.addColorStop(1, `${particle.color}00`);
-
-                ctx.globalAlpha = 0.25 + pulse * 0.35;
-                ctx.fillStyle = paint;
-                ctx.beginPath();
-                ctx.arc(particle.x, particle.y, radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            ctx.restore();
-
-            ctx.save();
-            ctx.globalCompositeOperation = "source-atop";
-            ctx.globalAlpha = 0.18;
-            ctx.shadowColor = "rgba(255,255,255,0.9)";
-            ctx.shadowBlur = Math.max(width, height) * 0.08;
-            drawText("fill");
-            ctx.restore();
-
-            animationRef.current = requestAnimationFrame(animate);
-        };
-
-        animationRef.current = requestAnimationFrame(animate);
+        animationRef.current = requestAnimationFrame(render);
 
         return () => {
-            if (animationRef.current) {
+            if (animationRef.current)
                 cancelAnimationFrame(animationRef.current);
-            }
+            gl.deleteTexture(texture);
+            gl.deleteBuffer(vertexBuffer);
+            gl.deleteProgram(program);
         };
     }, [
         blur,
@@ -370,9 +516,12 @@ const AnimatedGradientText: React.FC<AnimatedGradientTextProps> = ({
                 aria-hidden="true"
                 style={{
                     position: "absolute",
-                    inset: 0,
-                    width: "100%",
-                    height: "100%",
+                    top: -canvasPad,
+                    left: -canvasPad,
+                    right: -canvasPad,
+                    bottom: -canvasPad,
+                    width: `calc(100% + ${canvasPad * 2}px)`,
+                    height: `calc(100% + ${canvasPad * 2}px)`,
                     pointerEvents: "none",
                 }}
             />
