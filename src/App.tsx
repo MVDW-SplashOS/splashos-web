@@ -23,7 +23,12 @@ function App() {
     return (
         <div className="min-h-screen bg-background">
             {/* Navigation */}
-            <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+            <header
+                className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 transition-[border] duration-200 border-b border-transparent data-[scrolled=true]:border-border"
+                data-scrolled={
+                    typeof window !== "undefined" && window.scrollY > 0
+                }
+            >
                 <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
                     <div className="flex items-center gap-2">
                         <div className="h-8 w-8 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center">
@@ -201,11 +206,11 @@ function App() {
                                 complementary approaches.
                             </p>
                         </div>
-                        <div className="mx-auto grid max-w-6xl items-start gap-6 py-12 md:grid-cols-2">
+                        <div className="mx-auto grid max-w-6xl items-start gap-8 py-12 md:grid-cols-2">
                             <Card className="h-full">
-                                <CardHeader>
+                                <CardHeader className="pb-4">
                                     <div className="flex items-start gap-4">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 flex-shrink-0">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30 shrink-0">
                                             <Zap className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                                         </div>
                                         <div className="space-y-2">
@@ -215,57 +220,62 @@ function App() {
                                                 </CardTitle>
                                             </div>
                                             <CardDescription>
-                                                A vision what an operating
+                                                A vision of what an operating
                                                 system should be.
                                             </CardDescription>
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-3">
-                                        <p className="text-gray-500 dark:text-gray-400">
-                                            SplashOS Vision is where the future
-                                            begins. A powerful, Fedora-based
-                                            preview designed for rapid
-                                            innovation and community feedback.
-                                            Experience the vision before it
-                                            becomes the flagship.
-                                        </p>
-                                        <ul className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
-                                            <li className="flex items-center gap-2">
-                                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
+                                <CardContent className="space-y-6">
+                                    <p className="text-gray-500 dark:text-gray-400 leading-relaxed pb-4">
+                                        SplashOS Vision is where the future
+                                        begins. A powerful, Fedora-based preview
+                                        designed for rapid innovation and
+                                        community feedback. Experience the
+                                        vision before it becomes the flagship.
+                                    </p>
+                                    <ul className="text-sm text-gray-500 dark:text-gray-400 space-y-3">
+                                        <li className="flex items-start gap-3">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-blue-500 mt-2 shrink-0"></div>
+                                            <span>
                                                 Built on the robust Fedora
                                                 Workstation foundation
-                                            </li>
-                                            <li className="flex items-center gap-2">
-                                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
+                                            </span>
+                                        </li>
+                                        <li className="flex items-start gap-3">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-blue-500 mt-2 shrink-0"></div>
+                                            <span>
                                                 Rapid development cycles for the
                                                 latest advancements
-                                            </li>
-                                            <li className="flex items-center gap-2">
-                                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
+                                            </span>
+                                        </li>
+                                        <li className="flex items-start gap-3">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-blue-500 mt-2 shrink-0"></div>
+                                            <span>
                                                 Exclusive access to
                                                 groundbreaking experimental
                                                 features
-                                            </li>
-                                            <li className="flex items-center gap-2">
-                                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
+                                            </span>
+                                        </li>
+                                        <li className="flex items-start gap-3">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-blue-500 mt-2 shrink-0"></div>
+                                            <span>
                                                 Frequent updates with weekly
                                                 testing releases
-                                            </li>
-                                        </ul>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400 pt-2">
-                                            This is the proving ground. Join us
-                                            in shaping the next generation of
-                                            desktop computing.
-                                        </p>
-                                    </div>
+                                            </span>
+                                        </li>
+                                    </ul>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 pt-4 border-t">
+                                        This is the proving ground. Join us in
+                                        shaping the next generation of desktop
+                                        computing.
+                                    </p>
                                 </CardContent>
                             </Card>
                             <Card className="h-full">
-                                <CardHeader>
+                                <CardHeader className="pb-4">
                                     <div className="flex items-start gap-4">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30 flex-shrink-0">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30 shrink-0">
                                             <Cpu className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                                         </div>
                                         <div className="space-y-2">
@@ -281,43 +291,45 @@ function App() {
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-3">
-                                        <p className="text-gray-500 dark:text-gray-400">
-                                            SplashOS is where the vision becomes
-                                            reality. Our flagship distribution,
-                                            built from scratch, designed for
-                                            ultimate performance and stability.
-                                            Experience the future of desktop
-                                            computing, engineered for
-                                            perfection.
-                                        </p>
-                                        <ul className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
-                                            <li className="flex items-center gap-2">
-                                                <div className="h-1.5 w-1.5 rounded-full bg-purple-500"></div>
+                                <CardContent className="space-y-6">
+                                    <p className="text-gray-500 dark:text-gray-400 leading-relaxed  pb-4">
+                                        SplashOS is where the vision becomes
+                                        reality. Our flagship distribution,
+                                        built from scratch, designed for
+                                        ultimate performance and stability.
+                                        Experience the future of desktop
+                                        computing, engineered for perfection.
+                                    </p>
+                                    <ul className="text-sm text-gray-500 dark:text-gray-400 space-y-3">
+                                        <li className="flex items-start gap-3">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-2 shrink-0"></div>
+                                            <span>
                                                 Custom-built from the ground up
-                                            </li>
-                                            <li className="flex items-center gap-2">
-                                                <div className="h-1.5 w-1.5 rounded-full bg-purple-500"></div>
+                                            </span>
+                                        </li>
+                                        <li className="flex items-start gap-3">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-2 shrink-0"></div>
+                                            <span>
                                                 Revolutionary desktop
                                                 environment
-                                            </li>
-                                            <li className="flex items-center gap-2">
-                                                <div className="h-1.5 w-1.5 rounded-full bg-purple-500"></div>
-                                                Unmatched performance
-                                            </li>
-                                            <li className="flex items-center gap-2">
-                                                <div className="h-1.5 w-1.5 rounded-full bg-purple-500"></div>
+                                            </span>
+                                        </li>
+                                        <li className="flex items-start gap-3">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-2 shrink-0"></div>
+                                            <span>Unmatched performance</span>
+                                        </li>
+                                        <li className="flex items-start gap-3">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-2 shrink-0"></div>
+                                            <span>
                                                 Production-ready stability
-                                            </li>
-                                        </ul>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400 pt-2">
-                                            This is the destination. The
-                                            culmination of our vision for the
-                                            next generation of desktop
-                                            computing.
-                                        </p>
-                                    </div>
+                                            </span>
+                                        </li>
+                                    </ul>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 pt-4 border-t">
+                                        This is the destination. The culmination
+                                        of our vision for the next generation of
+                                        desktop computing.
+                                    </p>
                                 </CardContent>
                             </Card>
                         </div>
@@ -454,7 +466,7 @@ function App() {
                     </div>
                     <div className="flex items-center gap-4">
                         <a
-                            href="https://github.com/splashos"
+                            href="https://github.com/orgs/MVDW-SplashOS/"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
@@ -482,13 +494,6 @@ function App() {
                         <p>
                             © {new Date().getFullYear()} SplashOS Project. All
                             rights reserved.
-                        </p>
-                        <p className="mt-1">
-                            SplashOS Vision is Fedora-based. Fedora is a
-                            trademark of Red Hat, Inc.
-                        </p>
-                        <p className="mt-1">
-                            Linux is a registered trademark of Linus Torvalds.
                         </p>
                     </div>
                 </div>
