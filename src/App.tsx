@@ -31,10 +31,10 @@ function App() {
             >
                 <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
                     <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                            <Zap className="h-5 w-5 text-white" />
-                        </div>
                         <span className="text-xl font-bold">SplashOS</span>
+                        <span className="text-xs text-muted-foreground">
+                            / A Randasoftware Project
+                        </span>
                     </div>
                     <nav className="hidden md:flex items-center gap-6">
                         <a
@@ -55,12 +55,15 @@ function App() {
                         >
                             Community
                         </a>
-                        <a
+                        <Button
+                            size="lg"
+                            variant="outline"
+                            className="gap-2"
                             href="https://docs.splashos.com"
-                            className="text-sm font-medium hover:text-primary transition-colors"
                         >
-                            Documentation
-                        </a>
+                            <Globe className="h-5 w-5" />
+                            Learn About SplashOS
+                        </Button>
                     </nav>
                     <Button variant="outline" size="sm" className="md:hidden">
                         Menu
@@ -70,7 +73,7 @@ function App() {
 
             {/* Hero Section */}
             <main className="flex-1">
-                <section className="w-full py-12 md:py-24 lg:py-32">
+                <section className="w-full min-h-[calc(100vh-4rem)] flex items-center justify-center">
                     <div className="mx-auto max-w-7xl px-4 md:px-6">
                         <div className="flex flex-col items-center justify-center space-y-8 text-center">
                             <div className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-4 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -127,68 +130,6 @@ function App() {
                                     <MessageSquare className="h-5 w-5" />
                                     Join Discord
                                 </Button>
-                            </div>
-                            <div className="grid grid-cols-2 gap-8 pt-8 md:grid-cols-4 md:gap-12">
-                                <div className="flex flex-col items-center space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <Pulse
-                                            size="sm"
-                                            pulseFrom="var(--chart-2)"
-                                            pulseTo="var(--chart-3)"
-                                        />
-                                        <div className="text-3xl font-bold">
-                                            2.4s
-                                        </div>
-                                    </div>
-                                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                                        Boot Time
-                                    </div>
-                                </div>
-                                <div className="flex flex-col items-center space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <Pulse
-                                            size="sm"
-                                            pulseFrom="var(--primary)"
-                                            pulseTo="var(--accent)"
-                                        />
-                                        <div className="text-3xl font-bold">
-                                            600MB
-                                        </div>
-                                    </div>
-                                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                                        Memory Usage
-                                    </div>
-                                </div>
-                                <div className="flex flex-col items-center space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <Pulse
-                                            size="sm"
-                                            pulseFrom="var(--chart-4)"
-                                            pulseTo="var(--chart-5)"
-                                        />
-                                        <div className="text-3xl font-bold">
-                                            10K+
-                                        </div>
-                                    </div>
-                                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                                        Packages
-                                    </div>
-                                </div>
-                                <div className="flex flex-col items-center space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <Pulse
-                                            size="sm"
-                                            pulseFrom="var(--destructive)"
-                                            pulseTo="var(--accent-foreground)"
-                                        />
-                                        <div className="text-3xl font-bold">
-                                            24/7
-                                        </div>
-                                    </div>
-                                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                                        Support
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -359,25 +300,14 @@ function App() {
                                     <Download className="h-5 w-5" />
                                     Download SplashOS Vision (v0.1.0)
                                 </Button>
-                                <Button size="lg" className="gap-2">
+                                <Button size="lg" className="gap-2" disabled>
                                     <Download className="h-5 w-5" />
                                     Download SplashOS (soon)
-                                </Button>
-                                <Button
-                                    size="lg"
-                                    variant="outline"
-                                    className="gap-2"
-                                >
-                                    <Globe className="h-5 w-5" />
-                                    Learn About SplashOS
                                 </Button>
                             </div>
                             <div className="mt-8 text-sm text-gray-500 dark:text-gray-400">
                                 <strong>SplashOS Vision Requirements:</strong>{" "}
                                 2GB RAM, 20GB storage, 64-bit processor
-                                <br />
-                                <strong>SplashOS (Coming Soon):</strong> 4GB
-                                RAM, 30GB storage, 64-bit processor
                             </div>
                         </div>
                     </div>
@@ -456,12 +386,9 @@ function App() {
             <footer className="border-t py-8">
                 <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 md:px-6 md:flex-row">
                     <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                            <Zap className="h-4 w-4 text-white" />
-                        </div>
                         <span className="text-lg font-bold">SplashOS</span>
                         <span className="text-xs text-muted-foreground">
-                            / Vision
+                            / A Randasoftware Project
                         </span>
                     </div>
                     <div className="flex items-center gap-4">

@@ -1,6 +1,27 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@font-face {
+    font-family: "Quicksand";
+    src: url("/assets/font/quicksand/Quicksand-VariableFont_wght.ttf")
+        format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: "Quicksand";
+    src: url("/assets/font/quicksand/Quicksand-Italic-VariableFont_wght.ttf")
+        format("truetype");
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+body {
+    font-family: "Quicksand", sans-serif;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
